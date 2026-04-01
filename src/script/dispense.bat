@@ -19,7 +19,6 @@ echo.
 
 :: Use the local node.exe to run the script
 start "" /B ".\node.exe" dispense.js
-start "" /B ".\node.exe" watcher.js
 
 echo.
 echo ?? Script has finished or crashed.

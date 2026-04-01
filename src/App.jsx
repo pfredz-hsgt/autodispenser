@@ -7,7 +7,7 @@ function App() {
   const [status, setStatus] = useState({ dispense: 'stopped', watcher: 'stopped' });
   const [logs, setLogs] = useState({ dispense: [], watcher: [] });
   const [timers, setTimers] = useState({ dispense: { phase: 'Idle', timeLeft: 0 }, watcher: { phase: 'Idle', timeLeft: 0 } });
-  const [config, setConfig] = useState({ username: '', password: '', location: '', Run_Time: 5, Pause_Time: 5 });
+  const [config, setConfig] = useState({ username: '', password: '', location: '', Run_Time: 5, Pause_Time: 5, threshold: 10 });
   const [savingConfig, setSavingConfig] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
@@ -75,6 +75,10 @@ function App() {
   };
 
   const saveConfig = async () => {
+    if (!config.username || config.username.trim() === '') {
+      alert('Username must not be empty.');
+      return;
+    }
     setSavingConfig(true);
     try {
       await fetch('/api/config', {
@@ -222,21 +226,32 @@ function App() {
                   readOnly
                 />
               </div>
-              <div className="form-group">
-                <label>Run Time (mins)</label>
-                <input
-                  type="number"
-                  name="Run_Time"
-                  value={config.Run_Time || ''}
-                  onChange={handleConfigChange}
-                />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Run Time (mins)</label>
+                  <input
+                    type="number"
+                    name="Run_Time"
+                    value={config.Run_Time || ''}
+                    onChange={handleConfigChange}
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label>Pause Time (mins)</label>
+                  <input
+                    type="number"
+                    name="Pause_Time"
+                    value={config.Pause_Time || ''}
+                    onChange={handleConfigChange}
+                  />
+                </div>
               </div>
               <div className="form-group">
-                <label>Pause Time (mins)</label>
+                <label>Threshold</label>
                 <input
                   type="number"
-                  name="Pause_Time"
-                  value={config.Pause_Time || ''}
+                  name="threshold"
+                  value={config.threshold || ''}
                   onChange={handleConfigChange}
                 />
               </div>

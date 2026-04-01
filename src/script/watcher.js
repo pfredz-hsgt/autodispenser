@@ -21,11 +21,23 @@ function waitForUser(message) {
     console.log("--- PhIS Dispensing Monitor (OPD) ---");
 
     // 1. READ CONFIG
-    const CONFIG = {
+    let CONFIG = {
         username: 'system',
         password: 'phis12345',
-        location: 'Outpatient Pharmacy Counter'
+        location: 'Outpatient Pharmacy Counter',
+        threshold: 20
     };
+    const configPath = path.join(executeDir, 'config.json');
+    try {
+        if (fs.existsSync(configPath)) {
+            const configData = fs.readFileSync(configPath, 'utf8');
+            // Remove trailing commas before parsing if any
+            const cleanData = configData.replace(/,\s*}/g, '}');
+            CONFIG = { ...CONFIG, ...JSON.parse(cleanData) };
+        }
+    } catch (err) {
+        console.error("Error reading config:", err.message);
+    }
 
     // 2. LOCATE BROWSER
     const browserBaseDir = path.join(executeDir, 'browsers');
@@ -103,7 +115,8 @@ function waitForUser(message) {
         // 4. START THE LOOP
 
         while (browser.isConnected()) {
-            await startPrescriptionMonitor(page, 20, 5); //(page, <threshold>, <alertInterval in Sec>)
+            const threshold = CONFIG.threshold ? Number(CONFIG.threshold) : 30;
+            await startPrescriptionMonitor(page, threshold, 5); //(page, <threshold>, <alertInterval in Sec>)
         }
 
     } catch (criticalError) {
