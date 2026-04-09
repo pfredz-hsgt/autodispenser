@@ -315,7 +315,7 @@ app.use((req, res, next) => {
     res.status(404).send('Not Found');
 });
 
-const PORT = 3000;
+const PORT = 3333;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}. Local network access supported.`);
 });
