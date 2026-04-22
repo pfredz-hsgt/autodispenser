@@ -167,9 +167,10 @@ async function startPrescriptionMonitor(page, threshold = 10, alertIntervalSec =
 
                 if (await page.isVisible(STAGE_LIST) && await page.isVisible(searchBtnSelector)) {
                     await page.click(searchBtnSelector);
+                    await page.waitForTimeout(3000);
                     try {
                         await page.waitForSelector('.z-loading-indicator', { state: 'hidden', timeout: 15000 });
-                        await page.waitForTimeout(2000);
+                        await page.waitForTimeout(20000);
                     } catch (waitErr) {
                         await page.waitForTimeout(8000);
                     }
@@ -188,7 +189,7 @@ async function startPrescriptionMonitor(page, threshold = 10, alertIntervalSec =
 
             // 3. EXTRACT AND CHECK THE PRESCRIPTION COUNT
             try {
-                await page.waitForSelector(pagingSelector, { state: 'visible', timeout: 5000 });
+                await page.waitForSelector(pagingSelector, { state: 'visible', timeout: 15000 });
                 const infoText = await page.innerText(pagingSelector);
                 const allNumbers = infoText.match(/\d+/g);
 
