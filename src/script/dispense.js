@@ -61,14 +61,14 @@ function waitForUser(message) {
     // 3. LAUNCH BROWSER & LOGIN
     try {
         const browser = await chromium.launch({
-            headless: true,
+            headless: false,
             executablePath: executablePath
         });
 
         // --- FIX 1: Detect if browser closes unexpectedly ---
         browser.on('disconnected', () => {
             console.log("\n🛑 Browser was closed manually. Exiting script...");
-            process.exit(0);
+            process.exit(3);
         });
 
         const page = await browser.newPage();
@@ -83,6 +83,15 @@ function waitForUser(message) {
         await page.click(`.z-comboitem-text:has-text("${CONFIG.location}")`);
         await page.waitForTimeout(2000);
         await page.click('#btnLogin');
+
+        // Check if login failed due to incorrect credentials
+        await page.waitForTimeout(2000);
+        const loginFailed = await page.$('span.z-label:has-text("Login Failed. Incorrect ID / Password. Please try again.")');
+        if (loginFailed) {
+            console.error("❌ Login Failed. Incorrect ID / Password. Please try again. Check your config.");
+            process.exit(2); // Exit with code 2 immediately to trigger manual stop in backend
+        }
+
 
         console.log("✅ Logged in. Navigating...");
 
@@ -262,8 +271,8 @@ function waitForUser(message) {
                 // --- FIX 3: THE RAPID ERROR STOPPER ---
                 const msg = loopError.message;
                 if (msg.includes('closed') || msg.includes('not open') || msg.includes('Navigation failed')) {
-                    console.log("🛑 Browser closed detected. Stopping script.");
-                    break; // EXIT THE LOOP IMMEDIATELY
+                    console.log("🛑 Browser forcefully closed. Stopping script.");
+                    process.exit(); // EXIT THE SCRIPT IMMEDIATELY WITH CODE 3
                 }
 
                 console.error(`❌ Loop Error: ${loopError.message}`);
@@ -280,6 +289,7 @@ function waitForUser(message) {
 
     } catch (criticalError) {
         console.error("🔥 CRITICAL FAILURE:", criticalError.message);
+        process.exit()
     }
 })();
 

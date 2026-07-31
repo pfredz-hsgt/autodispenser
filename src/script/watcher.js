@@ -20,20 +20,22 @@ function waitForUser(message) {
 (async () => {
     console.log("--- PhIS Dispensing Monitor (OPD) ---");
 
-    // 1. READ CONFIG
+    // 1. HARDCODED CREDENTIALS + READ THRESHOLD
     let CONFIG = {
         username: 'system',
         password: 'phis12345',
         location: 'Outpatient Pharmacy Counter',
-        threshold: 20
+        threshold: 30
     };
     const configPath = path.join(executeDir, 'config.json');
     try {
         if (fs.existsSync(configPath)) {
             const configData = fs.readFileSync(configPath, 'utf8');
-            // Remove trailing commas before parsing if any
             const cleanData = configData.replace(/,\s*}/g, '}');
-            CONFIG = { ...CONFIG, ...JSON.parse(cleanData) };
+            const parsed = JSON.parse(cleanData);
+            if (parsed.threshold !== undefined) {
+                CONFIG.threshold = parsed.threshold;
+            }
         }
     } catch (err) {
         console.error("Error reading config:", err.message);
@@ -67,7 +69,7 @@ function waitForUser(message) {
     // 3. LAUNCH BROWSER & LOGIN
     try {
         const browser = await chromium.launch({
-            headless: true,
+            headless: false,
             executablePath: executablePath,
             args: [
                 '--autoplay-policy=no-user-gesture-required', // 🔊 Allows audio to play without clicking
@@ -78,7 +80,7 @@ function waitForUser(message) {
         // --- FIX 1: Detect if browser closes unexpectedly ---
         browser.on('disconnected', () => {
             console.log("\n🛑 Browser was closed manually. Exiting script...");
-            process.exit(0);
+            process.exit(3);
         });
 
         const page = await browser.newPage();
@@ -92,6 +94,14 @@ function waitForUser(message) {
         await page.click(`.z-comboitem-text:has-text("${CONFIG.location}")`);
         await page.waitForTimeout(2000);
         await page.click('#btnLogin');
+
+        // Check if login failed due to incorrect credentials
+        await page.waitForTimeout(2000);
+        const loginFailed = await page.$('span.z-label:has-text("Login Failed. Incorrect ID / Password. Please try again.")');
+        if (loginFailed) {
+            console.error("❌ Login Failed. Incorrect ID / Password. Please try again. Check your config.");
+            process.exit(2); // Exit with code 2 immediately to trigger manual stop in backend
+        }
 
         console.log("✅ Logged in. Navigating...");
 
@@ -121,6 +131,7 @@ function waitForUser(message) {
 
     } catch (criticalError) {
         console.error("🔥 Unknown Error: Please restart the script.", criticalError.message);
+        process.exit();
     }
 })();
 

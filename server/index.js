@@ -147,6 +147,14 @@ function startScript(scriptType) {
             appendLog(scriptType, 'info', `[SERVER] ${p.name} exited with code ${code}`);
             p.instance = null;
 
+            if (code === 2) {
+                appendLog(scriptType, 'info', `[SERVER] Script aborted due to fatal error. Please update your PhIS Credentials in Config and press Start to continue.`);
+                p.manualStop = true;
+            } else if (code === 3) {
+                appendLog(scriptType, 'info', `[SERVER] Browser was closed manually. Stopping script.`);
+                p.manualStop = true;
+            }
+
             if (!p.manualStop && p.timerPhase !== 'Paused') {
                 p.status = 'restarting';
                 io.emit('statusUpdate', { script: scriptType, status: p.status });
